@@ -48,10 +48,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            artifact: win-amd64
-            ext: zip
-            exe: libresvip-cli.exe
+          # - os: windows-latest
+          #   artifact: win-amd64
+          #   ext: zip
+          #   exe: libresvip-cli.exe
           - os: ubuntu-latest
             artifact: linux-x86_64
             ext: tar.gz
