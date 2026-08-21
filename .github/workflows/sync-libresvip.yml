@@ -1,0 +1,128 @@
+name: Sync LibreSVIP Release
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  check:
+    name: Check for new release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check upstream release
+        id: check
+        run: |
+          $headers = @{ 'User-Agent' = 'SyncLibreSVIP' }
+          $releases = Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/SoulMelody/LibreSVIP/releases?per_page=100'
+          $latest = $releases | Where-Object { -not $_.draft -and -not $_.prerelease -and $_.tag_name -match '^v\d+\.\d+\.\d+$' } | Select-Object -First 1
+          if (-not $latest) { Write-Error 'No matching release found upstream'; exit 1 }
+          $newVersion = ($latest.tag_name -replace '^v', '')
+          $index = Get-Content '3rdparty/libresvip/index.json' -Raw | ConvertFrom-Json
+          $current = ($index | ForEach-Object { [version]$_.version } | Measure-Object -Maximum).Maximum
+          if ([version]$newVersion -gt $current) {
+            "version=$newVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host "New version found: $newVersion (current: $current)"
+          } else {
+            Write-Host "No new version: upstream $newVersion <= current $current"
+          }
+
+  verify:
+    name: Verify on ${{ matrix.os }}
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: win-amd64
+            ext: zip
+            exe: libresvip-cli.exe
+          - os: ubuntu-latest
+            artifact: linux-x86_64
+            ext: tar.gz
+            exe: libresvip-cli
+          - os: macos-latest
+            artifact: macos-arm64
+            ext: tar.gz
+            exe: libresvip-cli
+    steps:
+      - name: Download and verify CLI
+        run: |
+          $version = "${{ needs.check.outputs.version }}"
+          $url = "https://github.com/SoulMelody/LibreSVIP/releases/download/v$version/LibreSVIP-CLI-$version.${{ matrix.artifact }}.${{ matrix.ext }}"
+          $archive = "libresvip.${{ matrix.ext }}"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          if ('${{ matrix.ext }}' -eq 'zip') {
+            Expand-Archive -Path $archive -DestinationPath '.' -Force
+          } else {
+            tar -xzf $archive -C .
+          }
+          $cliPath = "libresvip-cli/${{ matrix.exe }}"
+          if (-not (Test-Path -LiteralPath $cliPath)) { Write-Error "CLI binary not found at $cliPath"; exit 1 }
+          if (-not $IsWindows) { & chmod +x $cliPath }
+          $output = (& $cliPath plugin list 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) { Write-Error "libresvip-cli plugin list failed (exit $LASTEXITCODE):`n$output"; exit 1 }
+          if ($output -notmatch 'dspx') { Write-Error "plugin list does not contain dspx:`n$output"; exit 1 }
+          Write-Host "OK: $version on ${{ runner.os }} contains dspx plugin"
+
+  update:
+    name: Update catalog and push
+    needs: [check, verify]
+    if: needs.check.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update index.json
+        run: |
+          $version = "${{ needs.check.outputs.version }}"
+          $base = "https://github.com/SoulMelody/LibreSVIP/releases/download/v$version"
+          $artifacts = [ordered]@{
+            windows_amd64 = "$base/LibreSVIP-CLI-$version.win-amd64.zip"
+            macos_arm64   = "$base/LibreSVIP-CLI-$version.macos-arm64.tar.gz"
+            linux_amd64   = "$base/LibreSVIP-CLI-$version.linux-x86_64.tar.gz"
+          }
+          $newEntry = [pscustomobject]@{ version = $version; artifacts = $artifacts }
+          $indexPath = '3rdparty/libresvip/index.json'
+          $index = @(Get-Content $indexPath -Raw | ConvertFrom-Json)
+          $index = @($index | Where-Object { $_.version -ne $version }) + $newEntry
+          $sorted = $index | Sort-Object { [version]$_.version } -Descending
+          $json = $sorted | ConvertTo-Json -Depth 6 -AsArray
+          $lines = $json -split "`r?`n"
+          $sb = [System.Text.StringBuilder]::new()
+          foreach ($line in $lines) {
+            if ($line -match '^(\s*)(.*)$') {
+              [void]$sb.AppendLine((' ' * ($Matches[1].Length * 2)) + $Matches[2])
+            }
+          }
+          Set-Content -Path $indexPath -Value $sb.ToString().TrimEnd() -Encoding utf8
+          Get-Content $indexPath
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 3rdparty/libresvip/index.json
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m "Update LibreSVIP to ${{ needs.check.outputs.version }}"
+          git push origin HEAD:main
