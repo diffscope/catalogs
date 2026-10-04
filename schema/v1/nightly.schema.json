@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://catalogs.diffscope.org/schema/v1/nightly.schema.json",
+    "title": "DiffScope nightly release index",
+    "description": "A separate version list for the nightly channel, using the same entries as the stable and beta index.",
+    "type": "object",
+    "properties": {
+        "nightly": {
+            "$ref": "index.schema.json#/$defs/channelIndex"
+        }
+    },
+    "required": ["nightly"]
+}

@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Update DiffScope Nightly
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_id:
+        description: Published DiffScope nightly release ID
+        required: true
+        type: string
+
+concurrency:
+  group: diffscope-nightly-catalog
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  Update:
+    if: github.repository == 'diffscope/catalogs' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout catalogs
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install schema validator
+        run: python -m pip install --no-cache-dir 'jsonschema[format-nongpl]==4.25.1'
+
+      - name: Read and verify the published release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ inputs.release_id }}
+        run: |
+          python .github/scripts/update_diffscope_nightly.py fetch \
+            --release-id "$RELEASE_ID" \
+            --output "$RUNNER_TEMP/diffscope-nightly-manifest.json"
+
+      - name: Update catalog and push
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            python .github/scripts/update_diffscope_nightly.py merge \
+              --manifest "$RUNNER_TEMP/diffscope-nightly-manifest.json"
+            git add -- v1/diffscope/nightly.json "v1/diffscope/nightly/$RELEASE_VERSION.json"
+            if git diff --cached --quiet; then
+              echo "Catalog already contains $RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            git commit -m "Add DiffScope nightly $RELEASE_VERSION"
+            if git push origin HEAD:main; then
+              echo "Catalog updated to include $RELEASE_VERSION" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; merging against the latest main"
+            sleep 5
+          done
+          echo 'Could not push the nightly catalog after five attempts' >&2
+          exit 1

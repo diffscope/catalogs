@@ -1,0 +1,52 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://catalogs.diffscope.org/schema/v1/index.schema.json",
+    "title": "DiffScope release index",
+    "description": "Version lists for the stable and beta channels. Nightly versions are listed separately in nightly.json.",
+    "type": "object",
+    "properties": {
+        "stable": {
+            "$ref": "#/$defs/channelIndex",
+            "description": "Stable releases."
+        },
+        "beta": {
+            "$ref": "#/$defs/channelIndex",
+            "description": "Beta releases."
+        }
+    },
+    "required": ["stable", "beta"],
+    "$defs": {
+        "channelIndex": {
+            "type": "object",
+            "properties": {
+                "versions": {
+                    "type": "array",
+                    "description": "Available versions in this channel; may be empty when no releases are available.",
+                    "items": {
+                        "$ref": "#/$defs/versionEntry"
+                    }
+                }
+            },
+            "required": ["versions"],
+            "additionalProperties": false
+        },
+        "versionEntry": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Version identifier matching the referenced release manifest."
+                },
+                "manifest": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri-reference",
+                    "description": "URL or path of the release manifest, resolved relative to this index."
+                }
+            },
+            "required": ["version", "manifest"],
+            "additionalProperties": false
+        }
+    }
+}

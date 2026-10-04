@@ -1,0 +1,105 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://catalogs.diffscope.org/schema/v1/version.schema.json",
+    "title": "DiffScope release manifest",
+    "description": "Metadata and downloadable artifacts for one release in any supported channel.",
+    "type": "object",
+    "properties": {
+        "channel": {
+            "type": "string",
+            "enum": ["stable", "beta", "nightly"],
+            "description": "Release channel."
+        },
+        "version": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Version identifier matching the entry in the channel index."
+        },
+        "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Release timestamp in RFC 3339 format, including a time zone."
+        },
+        "source": {
+            "$ref": "#/$defs/source"
+        },
+        "releaseNotes": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri",
+            "description": "Optional absolute URL of the release notes."
+        },
+        "artifacts": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Downloadable files for the release, distinguished by platform, architecture, format and variant.",
+            "items": {
+                "$ref": "#/$defs/artifact"
+            }
+        }
+    },
+    "required": ["channel", "version", "date", "source", "artifacts"],
+    "$defs": {
+        "source": {
+            "type": "object",
+            "properties": {
+                "commit": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Source commit used to build this release."
+                },
+                "tag": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Optional source tag; an untagged nightly build may omit it."
+                }
+            },
+            "required": ["commit"],
+            "additionalProperties": false
+        },
+        "artifact": {
+            "type": "object",
+            "properties": {
+                "platform": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Target operating system or platform."
+                },
+                "arch": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Target CPU architecture."
+                },
+                "format": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "File or package format."
+                },
+                "variant": {
+                    "type": "string",
+                    "description": "Distribution variant, such as installer or portable. An empty string has the same meaning as omitting this property."
+                },
+                "url": {
+                    "type": "string",
+                    "minLength": 1,
+                    "format": "uri",
+                    "description": "Absolute download URL."
+                },
+                "size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "File size in bytes."
+                },
+                "sha256": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 64,
+                    "pattern": "^[0-9a-fA-F]{64}$",
+                    "description": "SHA-256 checksum."
+                }
+            },
+            "required": ["platform", "arch", "format", "url", "size", "sha256"],
+            "additionalProperties": false
+        }
+    }
+}
