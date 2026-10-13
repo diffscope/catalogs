@@ -1,0 +1,6 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/nightly.schema.json",
+    "nightly": {
+        "versions": []
+    }
+}
