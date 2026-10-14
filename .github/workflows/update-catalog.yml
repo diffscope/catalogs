@@ -1,0 +1,82 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Update Catalog
+run-name: Update ${{ inputs.product }} ${{ inputs.channel }} catalog
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Product directory under v1
+        required: true
+        type: string
+      channel:
+        description: Release channel
+        required: true
+        type: choice
+        options:
+          - stable
+          - beta
+          - nightly
+      manifest:
+        description: Complete version manifest encoded as JSON
+        required: true
+        type: string
+
+concurrency:
+  group: catalog-update
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  Update:
+    if: github.repository == 'diffscope/catalogs' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CATALOG_PRODUCT: ${{ inputs.product }}
+      CATALOG_CHANNEL: ${{ inputs.channel }}
+      CATALOG_MANIFEST: ${{ inputs.manifest }}
+      CATALOG_VERSION: ${{ fromJSON(inputs.manifest).version }}
+    steps:
+      - name: Checkout catalogs
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install schema validator
+        run: python -m pip install --no-cache-dir 'jsonschema[format-nongpl]==4.25.1'
+
+      - name: Update catalog and push
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            python .github/scripts/update_catalog.py
+            index_file=index.json
+            if [[ "$CATALOG_CHANNEL" == nightly ]]; then
+              index_file=nightly.json
+            fi
+            git add -- "v1/$CATALOG_PRODUCT/$index_file" \
+              "v1/$CATALOG_PRODUCT/$CATALOG_CHANNEL/$CATALOG_VERSION.json"
+            if git diff --cached --quiet; then
+              echo "Catalog already contains $CATALOG_PRODUCT/$CATALOG_CHANNEL/$CATALOG_VERSION" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            git commit -m "Add $CATALOG_PRODUCT $CATALOG_CHANNEL $CATALOG_VERSION"
+            if git push origin HEAD:main; then
+              echo "Catalog updated to include $CATALOG_PRODUCT/$CATALOG_CHANNEL/$CATALOG_VERSION" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "Push attempt $attempt failed. Retrying against the latest main."
+            sleep 5
+          done
+          echo 'Could not push the catalog after five attempts' >&2
+          exit 1
