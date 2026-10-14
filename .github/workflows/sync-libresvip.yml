@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
 name: Sync LibreSVIP Release
 
 on:
@@ -6,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 defaults:
   run:
@@ -18,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       versions: ${{ steps.check.outputs.versions }}
-      latest: ${{ steps.check.outputs.latest }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,12 +32,11 @@ jobs:
           $releases = Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/SoulMelody/LibreSVIP/releases?per_page=100'
           $all = @($releases | Where-Object { -not $_.draft -and -not $_.prerelease -and $_.tag_name -match '^v\d+\.\d+\.\d+$' } | ForEach-Object { $_.tag_name -replace '^v', '' })
           if ($all.Count -eq 0) { Write-Error 'No matching release found upstream'; exit 1 }
-          $index = Get-Content '3rdparty/libresvip/index.json' -Raw | ConvertFrom-Json
-          $current = ($index | ForEach-Object { [version]$_.version } | Measure-Object -Maximum).Maximum
+          $index = Get-Content 'v1/libresvip-cli/index.json' -Raw | ConvertFrom-Json
+          $current = ($index.stable.versions | ForEach-Object { [version]$_.version } | Measure-Object -Maximum).Maximum
           $new = @($all | Where-Object { [version]$_ -gt $current } | Sort-Object { [version]$_ } -Descending)
           if ($new.Count -gt 0) {
             "versions=$($new | ConvertTo-Json -Compress -AsArray)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-            "latest=$($new[0])" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
             Write-Host "New versions found: $($new -join ', ') (current: $current)"
           } else {
             'versions=[]' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
@@ -51,10 +52,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - os: windows-latest
-          #   artifact: win-amd64
-          #   ext: zip
-          #   exe: libresvip-cli.exe
           - os: ubuntu-latest
             artifact: linux-x86_64
             ext: tar.gz
@@ -88,50 +85,35 @@ jobs:
           }
 
   update:
-    name: Update catalog and push
+    name: Update stable catalog for ${{ matrix.version }}
     needs: [check, verify]
     if: needs.check.outputs.versions != '[]'
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        version: ${{ fromJSON(needs.check.outputs.versions) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update index.json
+      - name: Build stable release manifest
+        id: manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIBRESVIP_VERSION: ${{ matrix.version }}
         run: |
-          $versions = '${{ needs.check.outputs.versions }}' | ConvertFrom-Json
-          $indexPath = '3rdparty/libresvip/index.json'
-          $index = @(Get-Content $indexPath -Raw | ConvertFrom-Json)
-          foreach ($version in $versions) {
-            $base = "https://github.com/SoulMelody/LibreSVIP/releases/download/v$version"
-            $artifacts = [ordered]@{
-              windows_amd64 = "$base/LibreSVIP-CLI-$version.win-amd64.zip"
-              macos_arm64   = "$base/LibreSVIP-CLI-$version.macos-arm64.tar.gz"
-              linux_amd64   = "$base/LibreSVIP-CLI-$version.linux-x86_64.tar.gz"
-            }
-            $newEntry = [pscustomobject]@{ version = $version; artifacts = $artifacts }
-            $index = @($index | Where-Object { $_.version -ne $version }) + $newEntry
-          }
-          $sorted = $index | Sort-Object { [version]$_.version } -Descending
-          $json = $sorted | ConvertTo-Json -Depth 6 -AsArray
-          $lines = $json -split "`r?`n"
-          $sb = [System.Text.StringBuilder]::new()
-          foreach ($line in $lines) {
-            if ($line -match '^(\s*)(.*)$') {
-              [void]$sb.AppendLine((' ' * ($Matches[1].Length * 2)) + $Matches[2])
-            }
-          }
-          Set-Content -Path $indexPath -Value $sb.ToString().TrimEnd() -Encoding utf8
-          Get-Content $indexPath
+          python .github/scripts/libresvip.py $env:LIBRESVIP_VERSION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Commit and push
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 3rdparty/libresvip/index.json
-          if git diff --cached --quiet; then
-            echo 'No changes to commit'
-            exit 0
-          fi
-          git commit -m "Update LibreSVIP to ${{ needs.check.outputs.latest }}"
-          git push origin HEAD:main
+      - name: Update catalog and wait for completion
+        uses: ./actions/update-catalog
+        with:
+          product: libresvip-cli
+          channel: stable
+          manifest: ${{ steps.manifest.outputs.manifest }}

@@ -1,0 +1,76 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/version.schema.json",
+    "channel": "stable",
+    "version": "2.9.0",
+    "date": "2026-08-19T01:52:31Z",
+    "source": {
+        "commit": "1f86522fcfcd46a76f01fb58a7c311f52fee326b",
+        "tag": "v2.9.0"
+    },
+    "releaseNotes": "https://github.com/SoulMelody/LibreSVIP/releases/tag/v2.9.0",
+    "artifacts": [
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "zip",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.win-amd64.zip",
+            "size": 36692002,
+            "sha256": "10a0fea0e82339279bf8893c51e0cc28e4c2b9329e2d27019e7b9a01be714ee2"
+        },
+        {
+            "platform": "windows",
+            "arch": "arm64",
+            "format": "zip",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.win-arm64.zip",
+            "size": 32537109,
+            "sha256": "33597526e6e999397467a8a81b0c91fdfea801313ed0b6ee63c94db69c22fa4f"
+        },
+        {
+            "platform": "windows",
+            "arch": "x86",
+            "format": "zip",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.win-x86.zip",
+            "size": 33523050,
+            "sha256": "4f5661e710620cb6e0bba886e72bb8c9dcf862c1761ea1c7411a60220be0795e"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "tar.gz",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.linux-x86_64.tar.gz",
+            "size": 49571614,
+            "sha256": "de9a43aba32385b7b9df2ff9f7ffc2097511bb792cf5c41419441ee365494511"
+        },
+        {
+            "platform": "linux",
+            "arch": "arm64",
+            "format": "tar.gz",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.linux-aarch64.tar.gz",
+            "size": 46671214,
+            "sha256": "8f3c804d7d162561eeadd5e7eb47980936961c41a6433d0e68275e3a4a333214"
+        },
+        {
+            "platform": "macos",
+            "arch": "amd64",
+            "format": "tar.gz",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.macos-x86_64.tar.gz",
+            "size": 36854645,
+            "sha256": "f493e89e93d69aabc15b3d7178de61dd066dcf71ae76b8f8c000c06ad09dafe8"
+        },
+        {
+            "platform": "macos",
+            "arch": "arm64",
+            "format": "tar.gz",
+            "variant": "portable",
+            "url": "https://github.com/SoulMelody/LibreSVIP/releases/download/v2.9.0/LibreSVIP-CLI-2.9.0.macos-arm64.tar.gz",
+            "size": 34614934,
+            "sha256": "a201e3093621f7c15b0426dbdbe50d1ce538d0f2a1b85b8174d2323c220a3ee1"
+        }
+    ]
+}
