@@ -1,0 +1,9 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/index.schema.json",
+    "stable": {
+        "versions": []
+    },
+    "beta": {
+        "versions": []
+    }
+}
