@@ -51,6 +51,26 @@ Workflows in this repository can omit `app-id`, `private-key`, and `token`. The 
 
 The action passes all three inputs directly to the workflow. The serialized inputs must fit the [GitHub workflow dispatch payload limit](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#defining-inputs-for-manually-triggered-workflows). Release notes remain a URL, and artifacts remain metadata in the manifest.
 
+## Product Download Action
+
+The action at `diffscope/catalogs/actions/download-product@main` downloads a product artifact from a configurable catalog source. It defaults to the current runner's platform and architecture, the latest stable version, and the first variant for that platform and architecture. Downloads and cached files are verified against the manifest's byte size and SHA-256. No checkout is required.
+
+```yaml
+- name: Download LibreSVIP CLI
+  id: download
+  uses: diffscope/catalogs/actions/download-product@main
+  with:
+    product: libresvip-cli
+    version: '2.9.2'
+    variant: portable
+    directory: downloads
+    fail-on-no-match: 'true'
+```
+
+Use `steps.download.outputs.path` for the absolute downloaded file path and `steps.download.outputs.artifact` or `manifest` for JSON metadata. No match succeeds by default with `matched: 'false'` and an empty path; set `fail-on-no-match: 'true'` to fail instead. Check `steps.download.outputs.matched == 'true'` before using optional downloads. Caching is enabled by default and can be configured with `cache` and `cache-key-prefix`.
+
+See the [download action documentation](actions/download-product/README.md) for all inputs, outputs, selection rules, and examples using alternative catalog sources.
+
 ## LibreSVIP CLI
 
 LibreSVIP CLI uses the product ID `libresvip-cli` and publishes only the stable channel at `v1/libresvip-cli/index.json`. The beta list is empty, and there is no nightly catalog. The former `3rdparty/libresvip/index.json` is removed.

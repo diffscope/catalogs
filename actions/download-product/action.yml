@@ -1,0 +1,132 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Download Catalog Product
+description: Resolve and download a product artifact from a release catalog with checksum verification and optional caching.
+
+inputs:
+  source:
+    description: HTTP(S) catalog root containing product directories, including the schema version.
+    default: https://catalogs.diffscope.org/v1
+  product:
+    description: Product ID.
+    required: true
+  channel:
+    description: Release channel (stable, beta, or nightly).
+    default: stable
+  version:
+    description: Exact catalog version, or latest for the first version in the channel index.
+    default: latest
+  platform:
+    description: Artifact platform. Defaults to the current runner platform (windows, linux, or macos).
+  arch:
+    description: Artifact architecture. Defaults to the current runner architecture (amd64, arm64, or x86).
+  variant:
+    description: Artifact variant. Defaults to the first variant for the selected platform and architecture.
+  directory:
+    description: Download directory, absolute or relative to github.workspace. Defaults to github.workspace.
+  fail-on-no-match:
+    description: Whether a missing version or matching artifact fails the action (true or false).
+    default: 'false'
+  cache:
+    description: Enable GitHub Actions caching of verified artifact files (true or false).
+    default: 'true'
+  cache-key-prefix:
+    description: Cache namespace. A digest of the source, product, resolved release, and artifact metadata is always appended.
+    default: catalog-download-v1
+
+outputs:
+  matched:
+    description: Whether an artifact matched (true or false).
+    value: ${{ steps.resolve.outputs.matched }}
+  path:
+    description: Absolute path to the downloaded file, or empty when there is no match.
+    value: ${{ steps.download.outputs.path }}
+  cache-hit:
+    description: Whether a verified cached file was used (true or false).
+    value: ${{ steps.download.outputs.cache-hit || 'false' }}
+  cache-key:
+    description: Resolved cache key, or empty when caching is disabled or there is no match.
+    value: ${{ steps.resolve.outputs.cache-key }}
+  version:
+    description: Resolved version, or empty when the requested version is unavailable.
+    value: ${{ steps.resolve.outputs.version }}
+  platform:
+    description: Selected platform.
+    value: ${{ steps.resolve.outputs.platform }}
+  arch:
+    description: Selected architecture.
+    value: ${{ steps.resolve.outputs.arch }}
+  variant:
+    description: Selected variant, including an empty string for an unqualified artifact.
+    value: ${{ steps.resolve.outputs.variant }}
+  format:
+    description: Selected artifact format.
+    value: ${{ steps.resolve.outputs.format }}
+  url:
+    description: Selected artifact download URL.
+    value: ${{ steps.resolve.outputs.url }}
+  size:
+    description: Expected artifact size in bytes.
+    value: ${{ steps.resolve.outputs.size }}
+  sha256:
+    description: Expected artifact SHA-256 checksum.
+    value: ${{ steps.resolve.outputs.sha256 }}
+  artifact:
+    description: Selected artifact metadata encoded as JSON, or empty when there is no match.
+    value: ${{ steps.resolve.outputs.artifact }}
+  manifest:
+    description: Resolved release manifest encoded as JSON, or empty when the requested version is unavailable.
+    value: ${{ steps.resolve.outputs.manifest }}
+  manifest-url:
+    description: URL of the resolved release manifest.
+    value: ${{ steps.resolve.outputs.manifest-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve catalog artifact
+      id: resolve
+      uses: actions/github-script@v8
+      env:
+        CATALOG_ACTION_PATH: ${{ github.action_path }}
+        CATALOG_SOURCE: ${{ inputs.source }}
+        CATALOG_PRODUCT: ${{ inputs.product }}
+        CATALOG_CHANNEL: ${{ inputs.channel }}
+        CATALOG_VERSION: ${{ inputs.version }}
+        CATALOG_PLATFORM: ${{ inputs.platform }}
+        CATALOG_ARCH: ${{ inputs.arch }}
+        CATALOG_VARIANT: ${{ inputs.variant }}
+        CATALOG_DIRECTORY: ${{ inputs.directory }}
+        CATALOG_FAIL_ON_NO_MATCH: ${{ inputs.fail-on-no-match }}
+        CATALOG_CACHE: ${{ inputs.cache }}
+        CATALOG_CACHE_KEY_PREFIX: ${{ inputs.cache-key-prefix }}
+      with:
+        script: |
+          return await require(process.env.CATALOG_ACTION_PATH + '/download.cjs').resolve({core});
+
+    - name: Restore artifact cache
+      id: cache
+      if: steps.resolve.outputs.matched == 'true' && inputs.cache == 'true'
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ steps.resolve.outputs.cache-directory }}
+        key: ${{ steps.resolve.outputs.cache-key }}
+
+    - name: Download and verify artifact
+      id: download
+      if: steps.resolve.outputs.matched == 'true'
+      uses: actions/github-script@v8
+      env:
+        CATALOG_ACTION_PATH: ${{ github.action_path }}
+        CATALOG_SELECTION: ${{ steps.resolve.outputs.result }}
+      with:
+        script: |
+          await require(process.env.CATALOG_ACTION_PATH + '/download.cjs').download({core});
+
+    - name: Save artifact cache
+      if: steps.resolve.outputs.matched == 'true' && inputs.cache == 'true' && steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ steps.resolve.outputs.cache-directory }}
+        key: ${{ steps.resolve.outputs.cache-key }}
