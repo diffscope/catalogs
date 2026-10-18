@@ -3,6 +3,10 @@
     "nightly": {
         "versions": [
             {
+                "version": "0.1.0-nightly.20261018.1",
+                "manifest": "nightly/0.1.0-nightly.20261018.1.json"
+            },
+            {
                 "version": "0.1.0-nightly.20261017.2",
                 "manifest": "nightly/0.1.0-nightly.20261017.2.json"
             }
