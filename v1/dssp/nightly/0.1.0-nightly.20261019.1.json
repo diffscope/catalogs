@@ -1,0 +1,31 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/version.schema.json",
+    "channel": "nightly",
+    "version": "0.1.0-nightly.20261019.1",
+    "date": "2026-10-19T10:10:35Z",
+    "source": {
+        "commit": "2596b7b526f05ce86b5416a61b9428e65eff3d9d",
+        "tag": "v0.1.0-nightly.20261019.1"
+    },
+    "releaseNotes": "https://github.com/diffscope/diffsinger-synthesis-program/releases/tag/v0.1.0-nightly.20261019.1",
+    "artifacts": [
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "zip",
+            "variant": "portable",
+            "url": "https://github.com/diffscope/diffsinger-synthesis-program/releases/download/v0.1.0-nightly.20261019.1/dssp_nightly_0_1_0_nightly_20261019_1_Windows_amd64_portable.zip",
+            "size": 39065502,
+            "sha256": "633b51a69dfee46dee896b96f5b71e019fa7bd3d9a255e8a7e9ce3c75f460133"
+        },
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "zip",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffsinger-synthesis-program/releases/download/v0.1.0-nightly.20261019.1/dssp_nightly_0_1_0_nightly_20261019_1_Windows_amd64_debug_symbols.zip",
+            "size": 79834301,
+            "sha256": "d9afee4c9c49dea2a62e50338c9f7a936f3d27ee27524b028203219b827ef88a"
+        }
+    ]
+}
