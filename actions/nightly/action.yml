@@ -1,0 +1,104 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Product Nightly Release
+description: Check nightly eligibility, prepare build versions, or publish verified nightly release artifacts.
+
+inputs:
+  operation:
+    description: Operation to perform (check, prepare, or publish).
+    required: true
+  config:
+    description: Product configuration file relative to github.workspace.
+    default: .github/nightly.json
+  source-sha:
+    description: Full source commit SHA.
+    default: ${{ github.sha }}
+  build-type:
+    description: Build type for prepare (dev or nightly).
+    default: nightly
+  version-identifier:
+    description: Dev build metadata, or an optional nightly identifier using the current UTC YYYYMMDD.N.
+    default: ''
+  tag:
+    description: Reserved nightly tag for publish.
+    default: ''
+  application-name:
+    description: Application name from prepare for artifact selection during publish.
+    default: ''
+  directory:
+    description: Download directory for release artifacts inside github.workspace.
+    default: release-assets
+  token:
+    description: Token for the caller's repository. Check requires Contents and Actions read. Nightly prepare and publish require Contents write, and publish also requires Actions read.
+    default: ${{ github.token }}
+
+outputs:
+  should_build:
+    description: Whether the check permits a nightly build (true or false).
+    value: ${{ steps.operation.outputs.should_build }}
+  semver:
+    description: Reserved semantic version from prepare.
+    value: ${{ steps.operation.outputs.semver }}
+  tag:
+    description: Reserved nightly tag from prepare, or empty for a dev build.
+    value: ${{ steps.operation.outputs.tag }}
+  application_name:
+    description: Application name with the build type suffix from prepare.
+    value: ${{ steps.operation.outputs.application_name }}
+  version_identifier:
+    description: Build identifier from prepare.
+    value: ${{ steps.operation.outputs.version_identifier }}
+  version_suffix:
+    description: Version suffix after the base version, including its leading separator.
+    value: ${{ steps.operation.outputs.version_suffix }}
+  catalog_manifest:
+    description: Published nightly version manifest encoded as JSON.
+    value: ${{ steps.operation.outputs.catalog_manifest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate nightly publication inputs
+      id: publication
+      if: inputs.operation == 'publish'
+      uses: actions/github-script@v8
+      env:
+        NIGHTLY_ACTION_PATH: ${{ github.action_path }}
+        NIGHTLY_CONFIG: ${{ inputs.config }}
+        NIGHTLY_SOURCE_SHA: ${{ inputs.source-sha }}
+        NIGHTLY_TAG: ${{ inputs.tag }}
+        NIGHTLY_APPLICATION_NAME: ${{ inputs.application-name }}
+        NIGHTLY_DIRECTORY: ${{ inputs.directory }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          require(process.env.NIGHTLY_ACTION_PATH + '/nightly.cjs').downloadOptions({context, core});
+    - name: Download nightly build artifacts
+      if: inputs.operation == 'publish'
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ${{ steps.publication.outputs.pattern }}
+        path: ${{ steps.publication.outputs.directory }}
+        merge-multiple: true
+        github-token: ${{ inputs.token }}
+        repository: ${{ github.repository }}
+        run-id: ${{ github.run_id }}
+    - name: Execute nightly operation
+      id: operation
+      uses: actions/github-script@v8
+      env:
+        NIGHTLY_ACTION_PATH: ${{ github.action_path }}
+        NIGHTLY_OPERATION: ${{ inputs.operation }}
+        NIGHTLY_CONFIG: ${{ inputs.config }}
+        NIGHTLY_SOURCE_SHA: ${{ inputs.source-sha }}
+        NIGHTLY_BUILD_TYPE: ${{ inputs.build-type }}
+        NIGHTLY_VERSION_IDENTIFIER: ${{ inputs.version-identifier }}
+        NIGHTLY_TAG: ${{ inputs.tag }}
+        NIGHTLY_APPLICATION_NAME: ${{ inputs.application-name }}
+        NIGHTLY_DIRECTORY: ${{ inputs.directory }}
+        GH_TOKEN: ${{ inputs.token }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          await require(process.env.NIGHTLY_ACTION_PATH + '/nightly.cjs').run({github, context, core});

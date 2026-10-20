@@ -51,6 +51,14 @@ Workflows in this repository can omit `app-id`, `private-key`, and `token`. The 
 
 The action passes all three inputs directly to the workflow. The serialized inputs must fit the [GitHub workflow dispatch payload limit](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#defining-inputs-for-manually-triggered-workflows). Release notes remain a URL, and artifacts remain metadata in the manifest.
 
+## Product Nightly Action
+
+The action at `diffscope/catalogs/actions/nightly@main` centralizes nightly eligibility checks, dev and nightly build version preparation, artifact download, prerelease publication, and version manifest generation. Products declare their repository, version source, build attempt identity, and artifact list in `.github/nightly.json`. Their workflows retain schedules, concurrency queues, compilation, packaging, and catalog dispatch through `update-catalog`.
+
+The `check`, `prepare`, and `publish` operations share the same implementation. Release creation uses the verified existing tag without an explicit target commit. CMake project versions and plain version files are supported.
+
+See the [nightly action documentation](actions/nightly/README.md) for configuration, permissions, operation examples, and outputs.
+
 ## Product Download Action
 
 The action at `diffscope/catalogs/actions/download-product@main` downloads a product artifact from a configurable catalog source. It defaults to the current runner's platform and architecture, the latest stable version, and the first variant for that platform and architecture. Downloads and cached files are verified against the manifest's byte size and SHA-256. No checkout is required.
