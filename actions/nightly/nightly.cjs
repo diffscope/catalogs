@@ -152,7 +152,7 @@ async function check({ github, context, core, config }) {
         const { data: latest } = await github.rest.actions.getWorkflowRun({
             ...context.repo, run_id: matching[0].id
         });
-        if (latest.status !== 'completed' || latest.conclusion !== 'success') {
+        if (latest.conclusion === 'failure') {
             core.notice('Skipping nightly: latest Dev Build is ' + latest.status + '/' +
                 latest.conclusion + ' (' + latest.html_url + ')');
             return;

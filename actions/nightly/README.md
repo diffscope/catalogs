@@ -49,7 +49,7 @@ Artifact filenames concatenate the prepared application name, an underscore, the
     operation: check
 ```
 
-The check requires `contents: read` and `actions: read`. It returns `should_build: 'false'` if the source commit was already attempted or has no commits ahead of the latest attempt. It also returns false if the latest matching Dev Build is incomplete or unsuccessful. The Dev Build workflow is `dev-build.yml`, and eligible events are `push` and `workflow_dispatch`. An absent matching Dev Build does not block a nightly build. Reruns can resume their reserved attempt.
+The check requires `contents: read` and `actions: read`. It returns `should_build: 'false'` if the source commit was already attempted or has no commits ahead of the latest attempt. It also returns false if the latest matching Dev Build has a `failure` conclusion. All other Dev Build states, including cancellation, in-progress runs, and success, permit a nightly build. The Dev Build workflow is `dev-build.yml`, and eligible events are `push` and `workflow_dispatch`. An absent matching Dev Build does not block a nightly build. Reruns can resume their reserved attempt.
 
 ### Version Reservation
 
