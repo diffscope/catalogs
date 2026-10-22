@@ -4,7 +4,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { execFileSync } = require('node:child_process');
 
 const nightlyPattern = /^v(\d+\.\d+\.\d+-nightly\.(\d{8})\.([1-9]\d*))$/;
 const versionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -281,7 +280,7 @@ function publicationInputs(config, context) {
     return { tag, match, semver, directory, expected };
 }
 
-async function publish({ github, context, core, config }) {
+async function publish({ github, context, core, config, exec }) {
     const { tag, match, semver, directory, expected } = publicationInputs(config, context);
     const names = expected.map(asset => asset.name);
     const { data: ref } = await github.rest.git.getRef({ ...context.repo, ref: 'tags/' + tag });
@@ -291,14 +290,11 @@ async function publish({ github, context, core, config }) {
     if (!attempt || attempt.source_sha !== process.env.NIGHTLY_SOURCE_SHA || String(attempt.run_id) !== String(context.runId)) {
         throw new Error('The release tag does not belong to this build attempt');
     }
-    let release;
-    try {
-        ({ data: release } = await github.rest.repos.getReleaseByTag({ ...context.repo, tag }));
-    } catch (error) {
-        if (error.status !== 404) throw error;
-    }
+    const releases = await github.paginate(github.rest.repos.listReleases, { ...context.repo, per_page: 100 });
+    const matching = releases.filter(item => item.tag_name === tag);
+    if (matching.length > 1) throw new Error('Multiple releases use the nightly tag ' + tag);
+    let release = matching[0];
     if (!release) {
-        const releases = await github.paginate(github.rest.repos.listReleases, { ...context.repo, per_page: 100 });
         const previous = releases.filter(item => !item.draft && item.prerelease &&
             nightlyPattern.test(item.tag_name) && item.tag_name !== tag)
             .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))[0];
@@ -332,8 +328,10 @@ async function publish({ github, context, core, config }) {
             if (existing) {
                 await github.rest.repos.deleteReleaseAsset({ ...context.repo, asset_id: existing.id });
             }
-            execFileSync('gh', ['release', 'upload', tag, filename, '--repo',
-                context.repo.owner + '/' + context.repo.repo], { stdio: 'inherit' });
+            const uploadUrl = new URL(release.upload_url.replace(/\{[^}]*\}$/, ''));
+            uploadUrl.searchParams.set('name', name);
+            await exec.exec('gh', ['api', '--method', 'POST', uploadUrl.href,
+                '--header', 'Content-Type: application/octet-stream', '--input', filename, '--silent']);
         }
         assets = await github.paginate(github.rest.repos.listReleaseAssets, {
             ...context.repo, release_id: release.id, per_page: 100
@@ -370,11 +368,11 @@ async function publish({ github, context, core, config }) {
     await core.summary.addLink('Published ' + semver, release.html_url).write();
 }
 
-async function run({ github, context, core }) {
+async function run({ github, context, core, exec }) {
     const operations = { check, prepare, publish };
     const operation = process.env.NIGHTLY_OPERATION;
     if (!Object.hasOwn(operations, operation)) throw new Error('Unsupported nightly operation');
-    await operations[operation]({ github, context, core, config: configuration() });
+    await operations[operation]({ github, context, core, exec, config: configuration() });
 }
 
 function downloadOptions({ context, core }) {

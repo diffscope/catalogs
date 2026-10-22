@@ -101,4 +101,4 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         script: |
-          await require(process.env.NIGHTLY_ACTION_PATH + '/nightly.cjs').run({github, context, core});
+          await require(process.env.NIGHTLY_ACTION_PATH + '/nightly.cjs').run({github, context, core, exec});
