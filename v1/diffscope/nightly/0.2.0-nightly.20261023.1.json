@@ -1,0 +1,76 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/version.schema.json",
+    "channel": "nightly",
+    "version": "0.2.0-nightly.20261023.1",
+    "date": "2026-10-23T02:04:42Z",
+    "source": {
+        "commit": "a820767fbe393e1faffceabc819c242f912a78a8",
+        "tag": "v0.2.0-nightly.20261023.1"
+    },
+    "releaseNotes": "https://github.com/diffscope/diffscope-project/releases/tag/v0.2.0-nightly.20261023.1",
+    "artifacts": [
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "exe",
+            "variant": "installer",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_Windows_amd64_installer.exe",
+            "size": 83693958,
+            "sha256": "28b3d64e04d210634eac1a6f945e8cf4b65a946c27dd355c81cd9eb8fe167b56"
+        },
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "zip",
+            "variant": "portable",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_Windows_amd64_portable.zip",
+            "size": 120492648,
+            "sha256": "76916e875f65f3a2e8ecc3ceed0fbc007dc48f8adbe14aea5f6c2f6024899fdb"
+        },
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_Windows_amd64_debug_symbols.7z",
+            "size": 136322829,
+            "sha256": "9d6ceb147ce5dca989f06987c55f36c5fda935c9dd066e85003e98cbeff6622a"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "tar.xz",
+            "variant": "portable",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_Linux_amd64_portable.tar.xz",
+            "size": 93530056,
+            "sha256": "894bdc72c6c433d989a310f5fc37f27e5feeadf3fb601d8e84104dcf67ff50d5"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_Linux_amd64_debug_symbols.7z",
+            "size": 212080419,
+            "sha256": "5e6f42c052e0cb20be2ae8a1f87f5cc4552995ebf71f0cbe79ebf4148f2a2929"
+        },
+        {
+            "platform": "macos",
+            "arch": "arm64",
+            "format": "dmg",
+            "variant": "",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_macOS_arm64.dmg",
+            "size": 99461842,
+            "sha256": "92b12df352d899a29c62452f4eb63ec39ef72c0f2bf684dbf57fe2adb8e8ecfe"
+        },
+        {
+            "platform": "macos",
+            "arch": "arm64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261023.1/DiffScope_nightly_0_2_0_nightly_20261023_1_macOS_arm64_debug_symbols.7z",
+            "size": 78910668,
+            "sha256": "e2b62915518076643695d3fb8361209d3b6972a10280cc52e82558d3195e55fc"
+        }
+    ]
+}
