@@ -1,0 +1,85 @@
+{
+    "$schema": "https://catalogs.diffscope.org/schema/v1/version.schema.json",
+    "channel": "nightly",
+    "version": "0.2.0-nightly.20261109.1",
+    "date": "2026-11-09T01:52:38Z",
+    "source": {
+        "commit": "59149ff8f0dc2dd63bd4b9f9559f6c73e8b52c00",
+        "tag": "v0.2.0-nightly.20261109.1"
+    },
+    "releaseNotes": "https://github.com/diffscope/diffscope-project/releases/tag/v0.2.0-nightly.20261109.1",
+    "artifacts": [
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "exe",
+            "variant": "installer",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Windows_amd64_installer.exe",
+            "size": 72137226,
+            "sha256": "2a4e232cf22989453a4f41bfa7c31e0f053d0f9eaa300184c21a5daa4a2bcec4"
+        },
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "7z",
+            "variant": "portable",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Windows_amd64_portable.7z",
+            "size": 69898805,
+            "sha256": "1b1b549ca689d6721fbaaba77a59a8fb36cdce4bcd9006bf78c5d6b8e8ea7ddd"
+        },
+        {
+            "platform": "windows",
+            "arch": "amd64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Windows_amd64_debug_symbols.7z",
+            "size": 148640237,
+            "sha256": "6fd7ee31237ca4717765b4468444e2d9d61b00ec4783bfa7803dc426fe3d378d"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "appimage",
+            "variant": "appimage",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Linux_amd64_appimage.AppImage",
+            "size": 95386104,
+            "sha256": "776d73ecb7f89551953558629c859d1ee77954188bb9658d241258db0a9a1b94"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "tar.xz",
+            "variant": "portable",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Linux_amd64_portable.tar.xz",
+            "size": 76884616,
+            "sha256": "bb9e0244f365c31d4810dd01f51072011215a88efb76e375ffe4e199263ba437"
+        },
+        {
+            "platform": "linux",
+            "arch": "amd64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_Linux_amd64_debug_symbols.7z",
+            "size": 230191838,
+            "sha256": "5a5c4c0478a52f3222352a80540e6237231fa3f1e1cfb97c29006fbc7138124b"
+        },
+        {
+            "platform": "macos",
+            "arch": "arm64",
+            "format": "dmg",
+            "variant": "",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_macOS_arm64.dmg",
+            "size": 82228507,
+            "sha256": "a8ab5a7a5def76b038210e0a1189aabc925fbbe60d09951d8e4d286a054a1ed5"
+        },
+        {
+            "platform": "macos",
+            "arch": "arm64",
+            "format": "7z",
+            "variant": "debug_symbols",
+            "url": "https://github.com/diffscope/diffscope-project/releases/download/v0.2.0-nightly.20261109.1/DiffScope_nightly_0_2_0_nightly_20261109_1_macOS_arm64_debug_symbols.7z",
+            "size": 75199003,
+            "sha256": "acc15789388a5fb39b2932aec4217b5dfee8d0d6c5cbf0733c61816871e2b736"
+        }
+    ]
+}
