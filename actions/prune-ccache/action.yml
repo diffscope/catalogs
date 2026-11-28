@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Prune Ccache
+description: Retain recent default-branch ccache snapshots and delete other managed snapshots from the caller's repository.
+
+inputs:
+  keep:
+    description: Number of snapshots to retain on the default branch for each cache environment.
+    default: '1'
+  token:
+    description: Token with Actions write permission for the caller's repository.
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prune ccache snapshots
+      shell: pwsh
+      env:
+        CACHE_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        CACHE_KEEP: ${{ inputs.keep }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        & (Join-Path $env:GITHUB_ACTION_PATH 'Prune-CCache.ps1') -DefaultBranch $env:CACHE_DEFAULT_BRANCH -Keep $env:CACHE_KEEP

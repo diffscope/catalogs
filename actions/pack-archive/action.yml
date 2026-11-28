@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Pack Archive
+description: Archive a directory as a ZIP, 7z, or tar.xz file.
+
+inputs:
+  source-directory:
+    description: Directory to archive.
+    required: true
+  archive-path:
+    description: Output path ending in .zip, .7z, or .tar.xz.
+    required: true
+  root-name:
+    description: Top-level archive directory name. Defaults to the source directory name.
+    default: ''
+  compression:
+    description: Compression profile (standard or maximum). Maximum uses a 256 MiB LZMA2 dictionary for 7z and tar.xz.
+    default: standard
+
+outputs:
+  path:
+    description: Absolute path of the archive.
+    value: ${{ steps.pack.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Pack archive
+      id: pack
+      shell: pwsh
+      env:
+        ARCHIVE_SOURCE_DIRECTORY: ${{ inputs.source-directory }}
+        ARCHIVE_PATH: ${{ inputs.archive-path }}
+        ARCHIVE_ROOT_NAME: ${{ inputs.root-name }}
+        ARCHIVE_COMPRESSION: ${{ inputs.compression }}
+      run: |
+        & (Join-Path $env:GITHUB_ACTION_PATH 'Pack-Archive.ps1') -SourceDirectory $env:ARCHIVE_SOURCE_DIRECTORY -ArchivePath $env:ARCHIVE_PATH -RootName $env:ARCHIVE_ROOT_NAME -Compression $env:ARCHIVE_COMPRESSION

@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Restore Ccache
+description: Restore a read-only snapshot and prepare a writable cache for the build. Requires ccache 4.14 or later.
+
+inputs:
+  cache-directory:
+    description: Dedicated cache directory that does not exist yet, relative to the checkout or absolute.
+    required: true
+  environment:
+    description: Cache group that identifies the runner, toolchain, and target as needed.
+    required: true
+
+outputs:
+  cache-key:
+    description: Key to use when saving the new snapshot.
+    value: ${{ steps.key.outputs.cache-key }}
+  source-directory:
+    description: Directory containing the read-only snapshot for comparison after the build.
+    value: ${{ steps.prepare.outputs.source-directory }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare cache key
+      id: key
+      shell: pwsh
+      env:
+        CACHE_ENVIRONMENT: ${{ inputs.environment }}
+        CACHE_DIRECTORY: ${{ inputs.cache-directory }}
+      run: |
+        if ($env:CACHE_ENVIRONMENT -cnotmatch '^[a-z0-9][a-z0-9.-]{0,199}\z') {
+          throw 'The ccache environment must contain only lowercase letters, digits, dots, and hyphens.'
+        }
+        if ([string]::IsNullOrWhiteSpace($env:CACHE_DIRECTORY) -or $env:CACHE_DIRECTORY -match '[\r\n]') {
+          throw 'A single ccache directory is required.'
+        }
+        $cachePath = [System.IO.Path]::GetFullPath($env:CACHE_DIRECTORY, $env:GITHUB_WORKSPACE)
+        if (Test-Path -LiteralPath $cachePath) {
+          throw "The ccache directory already exists: $cachePath"
+        }
+        $prefix = "ccache-v1/$env:CACHE_ENVIRONMENT/"
+        "cache-key=$prefix$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT" >> $env:GITHUB_OUTPUT
+        "restore-key=$prefix" >> $env:GITHUB_OUTPUT
+
+    - name: Restore ccache snapshot
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ inputs.cache-directory }}
+        key: ${{ steps.key.outputs.cache-key }}
+        restore-keys: ${{ steps.key.outputs.restore-key }}
+
+    - name: Prepare ccache directories
+      id: prepare
+      shell: pwsh
+      env:
+        CACHE_DIRECTORY: ${{ inputs.cache-directory }}
+      run: |
+        & (Join-Path $env:GITHUB_ACTION_PATH 'Prepare-CCache.ps1') -CacheDirectory $env:CACHE_DIRECTORY

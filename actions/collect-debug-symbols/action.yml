@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Collect Debug Symbols
+description: Collect debug symbols from installed binaries on Windows, macOS, or Linux.
+
+inputs:
+  install-directory:
+    description: Directory containing the installed binaries.
+    required: true
+  output-directory:
+    description: New directory for collected symbols. Defaults to a unique runner temporary directory.
+    default: ''
+  pdb-search-paths:
+    description: Additional Windows PDB search directories, one per line.
+    default: ''
+  strip:
+    description: Strip debug information from processed Mach-O and ELF binaries after extraction.
+    default: 'false'
+  ad-hoc-sign:
+    description: Ad hoc sign Mach-O binaries after stripping.
+    default: 'false'
+
+outputs:
+  directory:
+    description: Debug symbol directory with paths relative to the installation directory.
+    value: ${{ steps.collect.outputs.directory }}
+
+runs:
+  using: composite
+  steps:
+    - name: Collect debug symbols
+      id: collect
+      shell: pwsh
+      env:
+        SYMBOL_INSTALL_DIRECTORY: ${{ inputs.install-directory }}
+        SYMBOL_OUTPUT_DIRECTORY: ${{ inputs.output-directory }}
+        SYMBOL_PDB_SEARCH_PATHS: ${{ inputs.pdb-search-paths }}
+        SYMBOL_STRIP: ${{ inputs.strip }}
+        SYMBOL_AD_HOC_SIGN: ${{ inputs.ad-hoc-sign }}
+      run: |
+        $arguments = @{
+          InstallDirectory = $env:SYMBOL_INSTALL_DIRECTORY
+          OutputDirectory = $env:SYMBOL_OUTPUT_DIRECTORY
+          PdbSearchPaths = $env:SYMBOL_PDB_SEARCH_PATHS
+          Strip = $env:SYMBOL_STRIP -eq 'true'
+          AdHocSign = $env:SYMBOL_AD_HOC_SIGN -eq 'true'
+        }
+        & (Join-Path $env:GITHUB_ACTION_PATH 'Collect-DebugSymbols.ps1') @arguments

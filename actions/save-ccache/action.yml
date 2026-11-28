@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: Team OpenVPI
+# SPDX-License-Identifier: Apache-2.0
+
+name: Save Ccache
+description: Report ccache statistics and optionally save a changed snapshot after a build.
+
+inputs:
+  cache-directory:
+    description: Cache directory supplied to the restore-ccache action.
+    required: true
+  cache-key:
+    description: Cache key returned by the restore-ccache action.
+    required: true
+  source-directory:
+    description: Read-only snapshot directory returned by the restore-ccache action.
+    required: true
+  save-snapshot:
+    description: Allow saving a nonempty snapshot if its contents changed.
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Summarize ccache statistics and prepare snapshot
+      id: snapshot
+      shell: pwsh
+      env:
+        CACHE_DIRECTORY: ${{ inputs.cache-directory }}
+        CACHE_SOURCE_DIRECTORY: ${{ inputs.source-directory }}
+        CACHE_SAVE_SNAPSHOT: ${{ inputs.save-snapshot }}
+      run: |
+        & (Join-Path $env:GITHUB_ACTION_PATH 'Save-CCache.ps1') -CacheDirectory $env:CACHE_DIRECTORY -SourceDirectory $env:CACHE_SOURCE_DIRECTORY -SaveSnapshot:($env:CACHE_SAVE_SNAPSHOT -eq 'true')
+
+    - name: Save ccache snapshot
+      if: steps.snapshot.outputs.save == 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.cache-directory }}
+        key: ${{ inputs.cache-key }}
